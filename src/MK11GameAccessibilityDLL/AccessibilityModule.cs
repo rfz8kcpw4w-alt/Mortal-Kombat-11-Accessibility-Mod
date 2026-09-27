@@ -1,48 +1,35 @@
-namespace MK11AccessibilityDLL;
+namespace MK11GameAccessibilityDLL;
 
 /// <summary>
-/// Erişilebilirlik modülünün ana giriş noktası.
-/// Oyun yükleme sırasında veya mod yükleyici tarafından çağrılır.
+/// Oyun durumunu seslendiren güvenli prototip. Bilinmeyen bellek adreslerine
+/// erişmez ve oyuna DLL enjeksiyonu yapmaz.
 /// </summary>
-public class AccessibilityModule
+public sealed class AccessibilityModule : IDisposable
 {
-    private static AccessibilityModule? instance;
-    private AccessibilityHook? hook;
-    private ScreenReaderBridge? bridge;
+    private readonly VoiceAnnouncer announcer = new();
+    private readonly LocalEventBridge events;
+    private bool initialized;
 
-    public static AccessibilityModule Instance => instance ??= new();
+    public AccessibilityModule() => events = new LocalEventBridge(announcer);
 
-    private AccessibilityModule() { }
-
-    /// <summary>
-    /// Modülü başlat ve oyun prosesine bağlan.
-    /// </summary>
     public bool Initialize()
     {
-        try
-        {
-            hook = new AccessibilityHook();
-            if (!hook.Hook()) return false;
-            bridge = new ScreenReaderBridge(hook);
-            return true;
-        }
-        catch { return false; }
+        if (initialized) return true;
+        initialized = true;
+        events.Start();
+        announcer.Enqueue("Erişilebilirlik ses köprüsü hazır.");
+        return true;
     }
 
-    /// <summary>
-    /// Modülü kapat ve kaynakları serbest bırak.
-    /// </summary>
-    public void Shutdown()
+    public void Shutdown() => Dispose();
+
+    public string GetGameStatusSummary() => "Durum, izinli oyun entegrasyonundan bekleniyor.";
+
+    public void Dispose()
     {
-        hook?.Unhook();
-        hook?.GetAnnouncer().Dispose();
+        if (!initialized) return;
+        initialized = false;
+        events.Dispose();
+        announcer.Dispose();
     }
-
-    public AccessibilityHook? GetHook() => hook;
-    public ScreenReaderBridge? GetBridge() => bridge;
-
-    /// <summary>
-    /// Oyun durum özetini al.
-    /// </summary>
-    public string GetGameStatusSummary() => bridge?.GetGameSummary() ?? "Erişilemiyor";
 }

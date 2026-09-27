@@ -1,83 +1,40 @@
 # Mortal Kombat 11 Erişilebilirlik Modu
 
-Görme engelli oyuncular için Mortal Kombat 11 erişilebilirlik projesi.
+## v0.6 — güvenli oyun-içi entegrasyon temeli
 
-## v0.5 - Oyun İçi Erişilebilirlik Modülü
+Bu sürümde sesli bildirim katmanı, rastgele bellek adreslerine veya DLL enjeksiyonuna dayanmayacak şekilde yeniden düzenlendi.
 
-Bu sürümde oyunun içindeki ekran okuyucu desteği başlatılmıştır:
+### Neler çalışır?
 
-### Yeni Bileşenler
+- SAPI üzerinden Türkçe sesli bildirim kuyruğu
+- Yerel Named Pipe üzerinden JSON olaylarını alma
+- Menü, tur, sağlık, kombo ve maç sonu olaylarını seslendirme
+- Oyun eklentisi/izinli entegrasyon bulunana kadar güvenli biçimde bekleme
 
-- **GameState.cs**: Oyun durumunun anlık görüntüsü (can, kombo, tur, faz)
-- **VoiceAnnouncer.cs**: SAPI 5.1 aracılığıyla değişiklikleri sesli açıklayan sistem
-  - Kombo başlama/bitme
-  - Tur sonuçları
-  - Sağlık değişimleri
-  - Oyun kazanma/kaybetme
-- **AccessibilityHook.cs**: Oyun belleğinden durumu okumaya çalışan sistem
-  - Proses ve bellek erişimi
-  - 500ms aralıkla durum yoklaması
-- **ScreenReaderBridge.cs**: NVDA/JAWS ve oyun arasında köprü
-  - Menü seçeneklerinin açıklanması
-  - Oyun durumu özeti
-  - Windows Automation API entegrasyonu
-- **AccessibilityModule.cs**: Ana modül ve giriş noktası
+### Olay kanalı
 
-### Önemli Notlar
+Kanal adı: `MK11AccessibilityEvents`
 
-1. **Bellek Okuma**: `AccessibilityHook.cs` içindeki bellek adresleri şu anda örnek adreslerdir. Mortal Kombat 11'in **çeşitli sürümleri için** doğru adresler bulmak gerekir:
-   - Oyun version güncellemeleri adres ofsetini değiştirebilir
-   - Dinamik bellek tahsisi şemaya göre değişebilir
-   - Reverse engineering araçları (CheatEngine, Ghidra, IDA) kullanarak bellek haritası çıkarılabilir
+Her satır bir JSON olayıdır. Örnek:
 
-2. **DLL Enjeksiyonu**: Modülü oyunun çalışma zamanında yüklemek için:
-   - DLL injection tool
-   - Oyun modding framework (varsa)
-   - Steam overlay API'si
+```json
+{"Type":"round_start","Round":1}
+{"Type":"health","Player1Health":80,"Player2Health":65}
+{"Type":"combo","Player1Combo":4,"Player2Combo":0}
+{"Type":"menu","Text":"Training mode"}
+{"Type":"fight_end","Text":"Oyuncu 1 kazandı"}
+```
 
-3. **İzin ve Yasal**: 
-   - Bu modül **oyun içi rekabeti etkilemez**
-   - Yaşlı sürümlerde başarısız olabilir
-   - Yalnızca erişilebilirlik amacıyla tasarlanmıştır
+### Önemli sınırlama
 
-## Kurulum
+Mortal Kombat 11 için yayımlanmış, desteklenen bir oyun-içi ekran okuyucu API'si olmadan bu depo tek başına oyunun görüntüsünü okuyamaz. Gerçek oyun olaylarını sağlayan izinli bir eklenti veya mod entegrasyonu gerekir. Bu nedenle v0.6 **oyuna enjekte olan hazır bir DLL değildir**; bilinmeyen bellek adreslerini okumaz, anti-hileyi aşmaz ve çevrim içi oyuna müdahale etmez.
 
-### DLL Derlemesi
+Bu tercih kasıtlıdır: örnek adreslerle bellek okumak oyunu bozabilir, güncellemelerde çalışmaz ve çevrim içi hesap açısından risk oluşturabilir. Oyun içi taraf için sonraki çalışma, yalnızca çevrim dışı/eğitim modu ve oyunun izin verdiği modlama yüzeyi üzerinde yapılmalıdır.
+
+## Derleme
 
 ```powershell
 dotnet build src/MK11GameAccessibilityDLL/MK11AccessibilityDLL.csproj -c Release
 ```
 
-### Oyundan Kullanım
-
-DLL'i yüklemek için bir DLL injector veya oyun modding framework kullanın:
-
-```csharp
-// Örnek C# injection kodu
-var module = AccessibilityModule.Instance;
-if (module.Initialize())
-{
-    Console.WriteLine("Erişilebilirlik modülü başladı.");
-    // Oyun çalışırken modül durumu izler
-}
-```
-
-## Geliştirilecek Alanlar
-
-- [ ] Mortal Kombat 11 bellek yapısının dökümantasyonu ve gerçek adresler
-- [ ] DLL injection framework
-- [ ] Menü yapılarının UIA üzerinden açıklanması
-- [ ] Gerçek zamanlı karakter pozisyon açıklamaları
-- [ ] Spesial hareket ve Fatality notifikasyonları
-- [ ] Turnuva modu rehberi
-- [ ] Ek diller (İngilizce ve Türkçe)
-
-## Gereksinimler
-
-- Windows 10/11
-- .NET 8
-- Mortal Kombat 11 (Steam)
-- NVDA veya JAWS
-- DLL injection aracı
-
-Kod MIT lisansıyla sunulur. Mortal Kombat 11 ve Steam ilgili hak sahiplerine aittir.
+Kod MIT lisansı ile sunulur. Mortal Kombat 11 ve Steam ilgili hak sahiplerine aittir.

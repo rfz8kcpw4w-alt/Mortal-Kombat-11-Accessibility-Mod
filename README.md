@@ -1,40 +1,24 @@
-# Mortal Kombat 11 Erişilebilirlik Modu
+# v0.7 — Evrensel ekran okuyucu köprüsü
 
-## v0.6 — güvenli oyun-içi entegrasyon temeli
+Eklenen destek:
 
-Bu sürümde sesli bildirim katmanı, rastgele bellek adreslerine veya DLL enjeksiyonuna dayanmayacak şekilde yeniden düzenlendi.
+- NVDA Controller Client DLL mevcutsa doğrudan NVDA konuşma çıktısı
+- JAWS çalışıyorsa SAPI uyumlu çıktı
+- Windows Narrator çalışıyorsa SAPI uyumlu çıktı
+- Ekran okuyucu yoksa SAPI fallback
+- Tek bir `UniversalAccessibilityAnnouncer` API'si
+- Mevcut yerel JSON olay köprüsü korunur
 
-### Neler çalışır?
-
-- SAPI üzerinden Türkçe sesli bildirim kuyruğu
-- Yerel Named Pipe üzerinden JSON olaylarını alma
-- Menü, tur, sağlık, kombo ve maç sonu olaylarını seslendirme
-- Oyun eklentisi/izinli entegrasyon bulunana kadar güvenli biçimde bekleme
-
-### Olay kanalı
-
-Kanal adı: `MK11AccessibilityEvents`
-
-Her satır bir JSON olayıdır. Örnek:
+Örnek olay:
 
 ```json
 {"Type":"round_start","Round":1}
 {"Type":"health","Player1Health":80,"Player2Health":65}
 {"Type":"combo","Player1Combo":4,"Player2Combo":0}
-{"Type":"menu","Text":"Training mode"}
-{"Type":"fight_end","Text":"Oyuncu 1 kazandı"}
 ```
 
-### Önemli sınırlama
+## Gerçek oyun entegrasyonu hakkında
 
-Mortal Kombat 11 için yayımlanmış, desteklenen bir oyun-içi ekran okuyucu API'si olmadan bu depo tek başına oyunun görüntüsünü okuyamaz. Gerçek oyun olaylarını sağlayan izinli bir eklenti veya mod entegrasyonu gerekir. Bu nedenle v0.6 **oyuna enjekte olan hazır bir DLL değildir**; bilinmeyen bellek adreslerini okumaz, anti-hileyi aşmaz ve çevrim içi oyuna müdahale etmez.
+Bu sürüm ekran okuyuculara ses çıktısı vermeye hazır bir köprü sağlar; fakat oyun içindeki gerçek olayları sağlayacak izinli bir MK11 eklentisi gerekir. Kod, rastgele bellek okuma, DLL enjeksiyonu veya anti-hile atlatma yapmaz. Bu nedenle NVDA/JAWS desteği oyuna otomatik olarak “enjekte edilmiş” değildir.
 
-Bu tercih kasıtlıdır: örnek adreslerle bellek okumak oyunu bozabilir, güncellemelerde çalışmaz ve çevrim içi hesap açısından risk oluşturabilir. Oyun içi taraf için sonraki çalışma, yalnızca çevrim dışı/eğitim modu ve oyunun izin verdiği modlama yüzeyi üzerinde yapılmalıdır.
-
-## Derleme
-
-```powershell
-dotnet build src/MK11GameAccessibilityDLL/MK11AccessibilityDLL.csproj -c Release
-```
-
-Kod MIT lisansı ile sunulur. Mortal Kombat 11 ve Steam ilgili hak sahiplerine aittir.
+NVDA doğrudan bağlantısı için kullanıcının resmi NVDA Controller Client DLL'sini sistemde bulundurması gerekir. JAWS ve Narrator için güvenli genel fallback SAPI'dir; üreticiye özel SDK olmadan sahte bir API çağrısı yapılmaz.

@@ -1,35 +1,48 @@
 namespace MK11GameAccessibilityDLL;
 
 /// <summary>
-/// Oyun durumunu seslendiren güvenli prototip. Bilinmeyen bellek adreslerine
-/// erişmez ve oyuna DLL enjeksiyonu yapmaz.
+/// MK11Hook entegrasyonlu Ana Erişilebilirlik Modülü v0.8
+/// Menü okuma, oyun olayları ve ekran okuyucu desteği.
 /// </summary>
 public sealed class AccessibilityModule : IDisposable
 {
-    private readonly VoiceAnnouncer announcer = new();
-    private readonly LocalEventBridge events;
+    private UniversalAccessibilityAnnouncer? announcer;
+    private GameEventBroadcaster? eventBroadcaster;
+    private LocalEventBridge? legacyBridge;
     private bool initialized;
-
-    public AccessibilityModule() => events = new LocalEventBridge(announcer);
 
     public bool Initialize()
     {
         if (initialized) return true;
-        initialized = true;
-        events.Start();
-        announcer.Enqueue("Erişilebilirlik ses köprüsü hazır.");
-        return true;
+        try
+        {
+            announcer = new UniversalAccessibilityAnnouncer();
+            announcer.Initialize();
+
+            eventBroadcaster = new GameEventBroadcaster(announcer);
+            eventBroadcaster.Start();
+
+            legacyBridge = new LocalEventBridge(announcer);
+            legacyBridge.Start();
+
+            announcer.Announce("Mortal Kombat 11 Erişilebilirlik Modülü v0.8 Başlatıldı. MK11Hook Menü Desteği Etkin.");
+            initialized = true;
+            return true;
+        }
+        catch { return false; }
     }
 
-    public void Shutdown() => Dispose();
-
-    public string GetGameStatusSummary() => "Durum, izinli oyun entegrasyonundan bekleniyor.";
-
-    public void Dispose()
+    public void Shutdown()
     {
         if (!initialized) return;
         initialized = false;
-        events.Dispose();
-        announcer.Dispose();
+        eventBroadcaster?.Dispose();
+        legacyBridge?.Dispose();
+        announcer?.Dispose();
+    }
+
+    public void Dispose()
+    {
+        Shutdown();
     }
 }

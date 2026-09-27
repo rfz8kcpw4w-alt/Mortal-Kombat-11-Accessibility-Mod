@@ -1,24 +1,19 @@
 # Mortal Kombat 11 Erişilebilirlik Modu
 
-Bu depo, görme engelli oyuncular için Mortal Kombat 11'e erişilebilirlik özellikleri eklemek üzere hazırlanmış **açık kaynak bir başlangıç projesidir**.
+Bu depo, görme engelli oyuncular için Mortal Kombat 11'e erişilebilirlik özellikleri eklemek üzere hazırlanmış açık kaynak bir başlangıç projesidir.
 
-> Önemli: Bu sürüm kurulum altyapısını ve erişilebilir kurulum arayüzünü içerir. Oyunun sesli oyun içi bildirimleri için Mortal Kombat 11'in sürümüne uygun, izinli bir mod bileşeni ayrıca geliştirilmelidir. Çevrim içi rekabeti etkileyen hile/otomasyon özellikleri bu projeye dahil edilmeyecektir.
+## v0.2 güncellemesi
 
-## Özellikler
+- Steam bulunamazsa oyun klasörünü elle seçme
+- `appmanifest_976310.acf` ile oyun doğrulama
+- Kurulum öncesi güvenlik onayı ve mod dosyası manifesti
+- Yalnızca manifestteki dosyaları kopyalama
+- Yol geçişi (`..`) saldırılarına karşı koruma
+- NVDA/JAWS için erişilebilir adlar, klavye odağı ve durum bildirimleri
+- SAPI seslendirmesini açıp kapatma
+- Kurulum günlüğü
 
-- ✅ Steam kütüphanelerini ve Mortal Kombat 11 kurulumunu otomatik bulma
-- ✅ Kurulumdan önce modifiye edilecek dosyaları yedekleme
-- ✅ Geri alma (restore) desteği
-- ✅ NVDA ve JAWS ile kullanılabilen standart Windows erişilebilirlik kontrolleri
-- ✅ Windows SAPI ile kurulum durumunu sesli bildirme
-- ✅ Türkçe ve İngilizce arayüz metinleri için genişletilebilir yapı
-
-## Gereksinimler
-
-- Windows 10 veya 11
-- .NET 8 Desktop Runtime
-- Steam üzerinden kurulmuş Mortal Kombat 11
-- NVDA veya JAWS (isteğe bağlı)
+> Bu depo, Mortal Kombat 11'in kendisine ait dosyaları içermez. `ModPayload` içine yalnızca dağıtım hakkınız olan, test edilmiş mod dosyalarını ekleyin. Oyun içi sesli açıklamalar henüz prototip aşamasındadır; çevrim içi rekabeti etkileyen hile veya otomasyon özellikleri eklenmeyecektir.
 
 ## Derleme
 
@@ -26,58 +21,35 @@ Bu depo, görme engelli oyuncular için Mortal Kombat 11'e erişilebilirlik öze
 dotnet build src/MK11AccessibilityInstaller/MK11AccessibilityInstaller.csproj -c Release
 ```
 
-## Çalıştırma
+## Kullanım
 
-```powershell
-dotnet run --project src/MK11AccessibilityInstaller/MK11AccessibilityInstaller.csproj
+1. Uygulamayı çalıştırın.
+2. Steam oyunu otomatik bulamazsa **Klasörü seç** düğmesini kullanın.
+3. **Modu kur** düğmesine basın.
+4. Orijinal dosyalar `MK11AccessibilityBackup` altında yedeklenir.
+5. Gerekirse **Yedekten geri yükle** düğmesini kullanın.
+
+Kurulum uygulaması, `ModPayload/manifest.txt` dosyası varsa yalnızca orada listelenen dosyaları kurar. Manifest yoksa klasördeki dosyalar taranır; `README.txt` ve `manifest.txt` kurulmaz.
+
+## Gereksinimler
+
+- Windows 10 veya 11
+- .NET 8 Desktop Runtime
+- Steam üzerinden kurulmuş Mortal Kombat 11
+- NVDA veya JAWS (isteğe bağlı; arayüz Windows erişilebilirlik API'lerini kullanır)
+
+## Proje yapısı
+
+```text
+src/MK11AccessibilityInstaller/
+  MainForm.cs
+  SteamLocator.cs
+  InstallerService.cs
+  PayloadManifest.cs
+  Program.cs
+ModPayload/
+  manifest.txt
+  README.txt
 ```
-
-`ModPayload` klasörüne gerçek ve test edilmiş mod dosyaları konulduğunda kurulum düğmesi bunları oyun klasörüne kopyalar. Gerçek mod dosyaları eklenmeden kurulum yapmak yalnızca yedekleme/kurulum altyapısını test eder.
-
-## Proje Yapısı
-
-```
-├── src/
-│   └── MK11AccessibilityInstaller/
-│       ├── MK11AccessibilityInstaller.csproj
-│       ├── Program.cs
-│       ├── MainForm.cs
-│       ├── SteamLocator.cs
-│       └── InstallerService.cs
-├── ModPayload/
-│   └── README.txt
-├── README.md
-├── LICENSE
-└── .gitignore
-```
-
-### Dosya Açıklamaları
-
-- **SteamLocator.cs**: Steam kurulum yolunu bulur, kütüphane dizinlerini tarar
-- **InstallerService.cs**: Mod dosyalarını kopyalar, yedekleme ve geri yükleme yapır
-- **MainForm.cs**: Erişilebilir Windows Forms arayüzü, NVDA/JAWS uyumlu
-- **ModPayload/**: Kurulum yapılacak mod dosyalarının yerleştirildiği dizin
-
-## Güvenlik ve Kullanım
-
-- Kurulumdan önce oyun klasörünün yedeğini alın.
-- Modu yalnızca çevrim dışı/izin verilen kullanım senaryolarında kullanın.
-- Steam güncellemeleri mod dosyalarını değiştirebilir; güncelleme sonrası yeniden kurulum gerekebilir.
-- Proje, lisanslı Mortal Kombat 11 dosyalarını içermez; yalnızca kullanıcı tarafından sağlanan mod dosyalarını kopyalar.
-
-## Erişilebilirlik Özellikleri (Gelecek Sürümler)
-
-- [ ] Sesli oyun durumu bildirimleri
-- [ ] Karakter konumu ve durum açıklamaları
-- [ ] Kombo rehberi ve eğitim modu
-- [ ] Menü ve ayarlar erişilebilirliği
-- [ ] Oyun içi şampiyon ve harita açıklamaları
-- [ ] Turnuva ve hikaye modu rehberi
-
-## Lisans
 
 Kod MIT lisansı ile sunulur. Mortal Kombat 11 ve Steam, ilgili hak sahiplerine aittir.
-
-## Katkı
-
-Erişilebilirlik iyileştirmeleri ve bug raporları için issue açabilirsiniz.

@@ -1,0 +1,5 @@
+# Kurulacak dosyaları oyun klasörüne göreli yollarıyla yazın.
+# Boş satırlar ve # ile başlayan satırlar yok sayılır.
+# Örnek:
+# Accessibility\AccessibilityPlugin.dll
+# Accessibility\config.json

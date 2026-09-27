@@ -1,55 +1,130 @@
-# Mortal Kombat 11 Erişilebilirlik Modu
+using System.Speech.Synthesis;
 
-Bu depo, görme engelli oyuncular için Mortal Kombat 11'e erişilebilirlik özellikleri eklemek üzere hazırlanmış açık kaynak bir başlangıç projesidir.
+namespace MK11AccessibilityInstaller;
 
-## v0.2 güncellemesi
+internal sealed class MainForm : Form
+{
+    private readonly Label statusLabel = new() { AutoSize = true, AccessibleName = "Durum" };
+    private readonly TextBox gamePathBox = new() { ReadOnly = true, Width = 560, AccessibleName = "Mortal Kombat 11 oyun klasörü" };
+    private readonly Button locateButton = new() { Text = "Steam oyununu bul", AutoSize = true, AccessibleName = "Steam oyununu bul" };
+    private readonly Button chooseButton = new() { Text = "Klasörü seç", AutoSize = true, AccessibleName = "Oyun klasörünü elle seç" };
+    private readonly Button installButton = new() { Text = "Modu kur", AutoSize = true, AccessibleName = "Modu kur" };
+    private readonly Button restoreButton = new() { Text = "Yedekten geri yükle", AutoSize = true, AccessibleName = "Yedekten geri yükle" };
+    private readonly CheckBox speechCheck = new() { Text = "Durumları seslendir", Checked = true, AutoSize = true, AccessibleName = "Durumları seslendir" };
+    private readonly SpeechSynthesizer speech = new();
+    private string? gamePath;
 
-- Steam bulunamazsa oyun klasörünü elle seçme
-- `appmanifest_976310.acf` ile oyun doğrulama
-- Kurulum öncesi güvenlik onayı ve mod dosyası manifesti
-- Yalnızca manifestteki dosyaları kopyalama
-- Yol geçişi (`..`) saldırılarına karşı koruma
-- NVDA/JAWS için erişilebilir adlar, klavye odağı ve durum bildirimleri
-- SAPI seslendirmesini açıp kapatma
-- Kurulum günlüğü
+    public MainForm()
+    {
+        Text = "Mortal Kombat 11 Erişilebilirlik Modu Kurulumu"; Width = 720; Height = 360;
+        StartPosition = FormStartPosition.CenterScreen; Font = new Font("Segoe UI", 10);
+        ScreenReaderSupport.ApplyAccessibilityDefaults(this);
 
-> Bu depo, Mortal Kombat 11'in kendisine ait dosyaları içermez. `ModPayload` içine yalnızca dağıtım hakkınız olan, test edilmiş mod dosyalarını ekleyin. Oyun içi sesli açıklamalar henüz prototip aşamasındadır; çevrim içi rekabeti etkileyen hile veya otomasyon özellikleri eklenmeyecektir.
+        var title = new Label { Text = "Mortal Kombat 11 Erişilebilirlik Modu", AutoSize = true, Font = new Font(Font, FontStyle.Bold), AccessibleName = "Başlık" };
+        var subtitle = new Label { Text = "Steam otomatik aranır; bulunamazsa klasörü elle seçebilirsiniz.", AutoSize = true, AccessibleName = "Açıklama" };
 
-## Derleme
+        locateButton.Click += (_, _) => Locate(); chooseButton.Click += (_, _) => ChooseFolder();
+        installButton.Click += (_, _) => Install(); restoreButton.Click += (_, _) => Restore();
+        installButton.Enabled = restoreButton.Enabled = false;
 
-```powershell
-dotnet build src/MK11AccessibilityInstaller/MK11AccessibilityInstaller.csproj -c Release
-```
+        var layout = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
+        layout.Controls.Add(title); layout.Controls.Add(subtitle); layout.Controls.Add(locateButton); layout.Controls.Add(chooseButton); layout.Controls.Add(gamePathBox); layout.Controls.Add(installButton); layout.Controls.Add(restoreButton); layout.Controls.Add(speechCheck); layout.Controls.Add(statusLabel);
+        Controls.Add(layout);
 
-## Kullanım
+        Shown += (_, _) =>
+        {
+            var reader = ScreenReaderSupport.Detect();
+            var screenReaderStatus = ScreenReaderSupport.GetStatusMessage(reader);
+            SetStatus(screenReaderStatus + " Steam aranıyor...");
+            Locate();
+        };
+    }
 
-1. Uygulamayı çalıştırın.
-2. Steam oyunu otomatik bulamazsa **Klasörü seç** düğmesini kullanın.
-3. **Modu kur** düğmesine basın.
-4. Orijinal dosyalar `MK11AccessibilityBackup` altında yedeklenir.
-5. Gerekirse **Yedekten geri yükle** düğmesini kullanın.
+    private void Locate()
+    {
+        gamePath = SteamLocator.FindGame();
+        UpdatePath(gamePath);
+        var reader = ScreenReaderSupport.Detect();
+        var status = gamePath is null ? "Mortal Kombat 11 bulunamadı." : "Mortal Kombat 11 bulundu.";
+        SetStatus(ScreenReaderSupport.GetStatusMessage(reader) + " " + status);
+    }
 
-Kurulum uygulaması, `ModPayload/manifest.txt` dosyası varsa yalnızca orada listelenen dosyaları kurar. Manifest yoksa klasördeki dosyalar taranır; `README.txt` ve `manifest.txt` kurulmaz.
+    private void ChooseFolder()
+    {
+        using var dialog = new FolderBrowserDialog { Description = "Mortal Kombat 11 oyun klasörünü seçin" };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        if (!File.Exists(Path.Combine(dialog.SelectedPath, "MK11.exe")) && !Directory.Exists(Path.Combine(dialog.SelectedPath, "Binaries")))
+        { SetStatus("Seçilen klasör Mortal Kombat 11 gibi görünmüyor."); return; }
+        gamePath = dialog.SelectedPath; UpdatePath(gamePath); SetStatus("Oyun klasörü seçildi.");
+    }
 
-## Gereksinimler
+    private void UpdatePath(string? path)
+    {
+        gamePathBox.Text = path ?? "Mortal Kombat 11 bulunamadı";
+        installButton.Enabled = restoreButton.Enabled = path is not null;
+    }
 
-- Windows 10 veya 11
-- .NET 8 Desktop Runtime
-- Steam üzerinden kurulmuş Mortal Kombat 11
-- NVDA veya JAWS (isteğe bağlı; arayüz Windows erişilebilirlik API'lerini kullanır)
+    private void Install()
+    {
+        if (gamePath is null) return;
+        try
+        {
+            installButton.Enabled = false;
+            SetStatus("Kurulum yapılıyor...");
+            Application.DoEvents();
 
-## Proje yapısı
+            var payloadDir = Path.Combine(AppContext.BaseDirectory, "ModPayload");
+            var count = InstallerService.Install(gamePath, payloadDir, file => statusLabel.Text = $"Kopyalanıyor: {file}");
+            SetStatus(count == 0 ? "ModPayload boş." : $"Kurulum tamamlandı. {count} dosya kopyalandı.");
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Kurulum hatası: {ex.Message}");
+        }
+        finally
+        {
+            installButton.Enabled = gamePath is not null;
+        }
+    }
 
-```text
-src/MK11AccessibilityInstaller/
-  MainForm.cs
-  SteamLocator.cs
-  InstallerService.cs
-  PayloadManifest.cs
-  Program.cs
-ModPayload/
-  manifest.txt
-  README.txt
-```
+    private void Restore()
+    {
+        if (gamePath is null) return;
+        try
+        {
+            restoreButton.Enabled = false;
+            SetStatus("Geri yükleme yapılıyor...");
+            Application.DoEvents();
 
-Kod MIT lisansı ile sunulur. Mortal Kombat 11 ve Steam, ilgili hak sahiplerine aittir.
+            var count = InstallerService.Restore(gamePath);
+            SetStatus($"Geri yükleme tamamlandı. {count} dosya geri yüklendi.");
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Geri yükleme hatası: {ex.Message}");
+        }
+        finally
+        {
+            restoreButton.Enabled = gamePath is not null;
+        }
+    }
+
+    private void SetStatus(string message)
+    {
+        statusLabel.Text = message;
+        statusLabel.AccessibleName = message;
+        statusLabel.AccessibleDescription = message;
+        Announce(message);
+    }
+
+    private void Announce(string message)
+    {
+        if (!speechCheck.Checked) return;
+        try
+        {
+            speech.SpeakAsyncCancelAll();
+            speech.SpeakAsync(message);
+        }
+        catch { }
+    }
+}

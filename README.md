@@ -1,116 +1,52 @@
-# Mortal Kombat 11 Erişilebilirlik Modu v0.8 - MK11Hook Menü Desteği
+# MK11AccessibilityHelper
 
-## Yeni Özellikleri:
+Bu yardımcı uygulama, Mortal Kombat 11 için dışarıdan çalışan bir erişilebilirlik aracı olarak tasarlanmıştır.
 
-### 1. MK11Hook Lua Scriptleri
-- `MK11MenuHook.lua` - Menü olaylarını algılayan ve Named Pipe'a gönderen script
-- Menü açılması/kapanması
-- Menü seçim değişimleri
-- Tur başlama, can durumu, kombo olayları
-- Tur ve maç sonu bildirileri
+Amaç:
+- MK11 pencere boyutunu ve konumunu bulur
+- ekran görüntüsünü yakalar
+- OCR ile menü metinlerini okur
+- NVDA/JAWS/SAPI ile okur
+- gerektiğinde klavye komutları gönderir
 
-### 2. Menü Erişilebilirliği
-- `MenuAccessibilityModule.cs` - Menü navigasyon ve okuma
-- Menü seçeneklerini NVDA/JAWS'a iletme
-- Seçim indeksini ve toplam seçenek sayısını okuma
-- Menü kapatma/açma sesli bildirimleri
+Önemli:
+- Bu uygulama, oyun içi bir mod değil; harici bir yardımcı araçtır.
+- MK11'nin kendi menü sistemini doğrudan değiştirmez.
+- Başarılı çalışması için Tesseract OCR ve sistemde ekran okuyucu gerekir.
 
-### 3. Oyun Olayları
-- `GameEventBroadcaster.cs` - MK11Hook'tan gelen olayları dinleme
-- Named Pipe üzerinden JSON olaylarını işleme
-- Menü ve oyun durumu olaylarını ekran okuyuculara iletme
+## Gerekli araçlar
 
-## Kurulum Adımları
+- .NET 8 SDK
+- Windows 10/11
+- Tesseract OCR kurulu (veya `tessdata` klasörü içindeki `eng` dili)
+- NVDA veya JAWS (isteğe bağlı; fallback olarak SAPI çalışır)
 
-### 1. MK11Hook Kurulumu
-
-```powershell
-# MK11Hook'u indirin
-git clone https://github.com/ermaccer/MK11Hook.git
-
-# Dosyaları MK11 oyun klasörüne kopyalayın
-Copy-Item MK11Hook\* "C:\Program Files (x86)\Steam\steamapps\common\Mortal Kombat 11\" -Recurse
-```
-
-### 2. Lua Scriptini Kopyalayın
+## Derleme
 
 ```powershell
-# MK11MenuHook.lua'yı Mods klasörüne kopyalayın
-Copy-Item MK11MenuHook.lua "C:\Program Files (x86)\Steam\steamapps\common\Mortal Kombat 11\Mods\"
+dotnet restore src/MK11AccessibilityHelper/MK11AccessibilityHelper.csproj
+dotnet build src/MK11AccessibilityHelper/MK11AccessibilityHelper.csproj -c Release
 ```
 
-### 3. Erişilebilirlik DLL'sini Derleyin
+## Çalıştırma
 
 ```powershell
-dotnet build src/MK11GameAccessibilityDLL/MK11GameAccessibilityDLL.csproj -c Release
+dotnet run --project src/MK11AccessibilityHelper/MK11AccessibilityHelper.csproj
 ```
 
-### 4. NVDA/JAWS ile Test
+## Kullanım
 
-1. NVDA veya JAWS'u başlatın
-2. MK11'i başlatın
-3. Menülerde gezinin (ok tuşları)
-4. NVDA/JAWS menü seçeneklerini okuyacaktır
+1. Mortal Kombat 11'i açın.
+2. Yardımcı uygulamayı çalıştırın.
+3. "Oyun penceresini bul" düğmesine basın.
+4. "Menü oku" butonuna basın.
+5. Uygulama ekran görüntüsünü OCR ile analiz eder ve metni sesli okur.
+6. Gerekirse doğrulama için ekranı yeniden okur veya kısayol tuşlarını gönderir.
 
-## Nasıl Çalışır
+## Notlar
 
-```
-MK11 Menü
-   ↓ (MK11Hook Lua Script)
-Named Pipe: "MK11AccessibilityEvents"
-   ↓ (JSON Olayları)
-GameEventBroadcaster
-   ↓
-MenuAccessibilityModule
-   ↓
-UniversalAccessibilityAnnouncer
-   ↓
-NVDA / JAWS / Narrator / SAPI
-   ↓
-🔊 Sesli Bildirim
-```
+- Bu uygulama, doğrudan oyunun menü sistemi üzerinde değişiklik yapmaz.
+- Çevrim içi oyunlarda kullanılmamalıdır.
+- Oyun ve ekran boyutları değişirse OCR bölgesi ayarlanmalıdır.
 
-## Örnek Olay Akışı
-
-```json
-{"Type":"menu","Text":"Ana Menü","Items":4}
-{"Type":"menu_select","Text":"Eğitim Modu","Index":1,"Total":4}
-{"Type":"menu_select","Text":"Karakter Seç","Index":2,"Total":4}
-{"Type":"round_start","Round":1}
-{"Type":"health","Player1Health":100,"Player2Health":100}
-{"Type":"combo","Player1Combo":3,"Player2Combo":0}
-{"Type":"fight_end","Text":"Oyuncu 1 kazandı"}
-```
-
-## Desteklenen Ekran Okuyucular
-
-✅ NVDA (NVDA Controller Client DLL)
-✅ JAWS (SAPI fallback)
-✅ Windows Narrator (SAPI fallback)
-✅ Diğer SAPI uyumlu okuyucular
-
-## Teknik Bilgiler
-
-- **MK11Hook**: Community modding framework
-- **Lua**: Script tarafında menü olayları
-- **Named Pipe**: Oyun ve dış aplikasyon iletişimi
-- **.NET 8**: Erişilebilirlik köprüsü
-- **SAPI 5.1**: Sesli bildirim
-- **NVDA Controller Client**: NVDA doğrudan entegrasyonu
-
-## Sınırlamalar
-
-- MK11Hook sadece çevrim dışı oyunda çalışır
-- Çevrim içi rankında kullanılmamalidir
-- Oyunun her güncellemesinde test edilmelidir
-- Anti-hile sistemi tarafından engellenebilir
-
-## Gelecek Sürümleri
-
-- [ ] Karakter seçim ekranı navigasyonu
-- [ ] Hikaye modu rehberi
-- [ ] Turnuva modu sesli rehberi
-- [ ] İstatistik raporu seslendirmesi
-- [ ] Özelleştirilebilir kısayollar
-
-MIT Lisansı - Mortal Kombat 11 ve Steam ilgili hak sahiplerine aittir.
+MIT lisansı ile sunulur.

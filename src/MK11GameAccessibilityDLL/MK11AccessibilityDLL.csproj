@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MK11AccessibilityDLL</AssemblyName>
+    <RootNamespace>MK11AccessibilityDLL</RootNamespace>
+    <Version>0.1.0</Version>
+    <Authors>rfz8kcpw4w-alt</Authors>
+    <Description>Mortal Kombat 11 oyun içi erişilebilirlik modülü</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Speech" Version="8.0.0" />
+  </ItemGroup>
+</Project>

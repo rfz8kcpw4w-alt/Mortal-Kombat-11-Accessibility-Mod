@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MK11AccessibilityInstaller</AssemblyName>
+    <RootNamespace>MK11AccessibilityInstaller</RootNamespace>
+    <Version>0.1.0</Version>
+    <Authors>rfz8kcpw4w-alt</Authors>
+    <Description>Erişilebilirlik modu kurulum aracı</Description>
+  </PropertyGroup>
+</Project>

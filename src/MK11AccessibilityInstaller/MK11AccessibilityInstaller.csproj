@@ -7,8 +7,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>MK11AccessibilityInstaller</AssemblyName>
     <RootNamespace>MK11AccessibilityInstaller</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.4.0</Version>
     <Authors>rfz8kcpw4w-alt</Authors>
     <Description>Erişilebilirlik modu kurulum aracı</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Speech" Version="8.0.0" />
+  </ItemGroup>
 </Project>
